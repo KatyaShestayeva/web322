@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 8080;
 
 
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.set('views', __dirname + '/views');
 
 app.get('/', (req, res) => {
     res.redirect('/about');
