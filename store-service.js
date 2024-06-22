@@ -1,64 +1,82 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
 
-let items = [];
-let categories = [];
+let items;
+let categories;
 
-function initialize() {
-    return new Promise((resolve, reject) => {
-        fs.readFile(path.join(__dirname, 'data', 'items.json'), 'utf8', (err, data) => {
-            if (err) {
-                reject("unable to read file");
-                return;
-            }
-            items = JSON.parse(data);
+fs.readFile("./data/items.json", "utf8", (err, jsonString) => {
+	if (err) {
+		console.log("File read error:", err);
+		return;
+	}
+	// Initialize items array
+	items = JSON.parse(jsonString);
+});
 
-            fs.readFile(path.join(__dirname, 'data', 'categories.json'), 'utf8', (err, data) => {
-                if (err) {
-                    reject("unable to read file");
-                    return;
-                }
-                categories = JSON.parse(data);
-                resolve();
-            });
-        });
-    });
-}
-
-function getAllItems() {
-    return new Promise((resolve, reject) => {
-        if (items.length === 0) {
-            reject("no results returned");
-        } else {
-            resolve(items);
-        }
-    });
-}
-
-function getPublishedItems() {
-    return new Promise((resolve, reject) => {
-        const publishedItems = items.filter(item => item.published === true);
-        if (publishedItems.length === 0) {
-            reject("no results returned");
-        } else {
-            resolve(publishedItems);
-        }
-    });
-}
-
-function getCategories() {
-    return new Promise((resolve, reject) => {
-        if (categories.length === 0) {
-            reject("no results returned");
-        } else {
-            resolve(categories);
-        }
-    });
-}
-
-module.exports = {
-    initialize,
-    getAllItems,
-    getPublishedItems,
-    getCategories
+module.exports.initialize = function () {
+	return new Promise((resolve, reject) => {
+		fs.readFile("./data/categories.json", "utf8", (err, jsonString) => {
+			if (err) {
+				console.log("File read error:", err);
+				reject("Unable to read category file");
+				return;
+			}
+			categories = JSON.parse(jsonString);
+			resolve();
+		});
+	});
 };
+
+module.exports.getAllItems = function () {
+	return new Promise((resolve, reject) => {
+		items.length !== 0 ? resolve(items) : reject("Items array is empty!");
+	});
+};
+
+module.exports.getAllCategories = function () {
+	return new Promise((resolve, reject) => {
+		categories.length !== 0 ? resolve(categories) : reject("Categories array is empty!");
+	});
+};
+
+module.exports.getPublishedItems = function () {
+	return new Promise((resolve, reject) => {
+		const publishedItems = items.filter((item) => item.published === true);
+		publishedItems.length !== 0 ? resolve(publishedItems) : reject("No published items found!");
+	});
+};
+
+module.exports.getItemsByCategory = function (category) {
+	return new Promise((resolve, reject) => {
+		const filteredItems = items.filter((item) => item.category === category);
+		filteredItems.length !== 0 ? resolve(filteredItems) : reject("No items found for the category");
+	});
+};
+
+module.exports.getItemsByMinDate = function (minDateStr) {
+	return new Promise((resolve, reject) => {
+		const minDate = new Date(minDateStr);
+		const filteredItems = items.filter((item) => new Date(item.postDate) >= minDate);
+		filteredItems.length !== 0 ? resolve(filteredItems) : reject("No items found for the minimum date");
+	});
+};
+
+module.exports.getItemById = function (id) {
+	return new Promise((resolve, reject) => {
+		const item = items.find((item) => item.id === id);
+		item ? resolve(item) : reject("Item not found");
+	});
+};
+
+
+app.get("/item/:id", (req, res) => {
+    const itemId = parseInt(req.params.id);
+
+    storeService.getItemById(itemId)
+        .then((item) => {
+            res.send(JSON.stringify(item));
+        })
+        .catch((err) => {
+            console.log("Error:", err);
+            res.status(404).send("Item not found");
+        });
+});
